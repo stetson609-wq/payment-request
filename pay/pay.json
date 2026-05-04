@@ -1,16 +1,16 @@
 {
-  "name": "cardpay.com",
+  "name": "CardPay Payment",
   "short_name": "CardPay",
   "icons": [
     {
-      "src": "/pay/icon.png",
-      "sizes": "192x192",
+      "src": "./icon.png",
+      "sizes": "48x48",
       "type": "image/png"
     }
   ],
   "serviceworker": {
-    "src": "sw.js",
-    "scope": "/pay/",
+    "src": "../sw.js",
+    "scope": "/",
     "use_cache": false
   }
 }

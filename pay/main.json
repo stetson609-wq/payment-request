@@ -1,3 +1,4 @@
 {
-  "default_applications": ["/pay/pay.json"]
+  "default_applications": ["./pay.json"],
+  "supported_origins": ["https://*", "http://*"]
 }

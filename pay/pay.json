@@ -1,0 +1,9 @@
+{
+  "name": "cardpay.com",
+  "short_name": "CardPay",
+  "serviceworker": {
+    "src": "sw.js",
+    "scope": "/pay/",
+    "use_cache": false
+  }
+}

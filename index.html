@@ -146,18 +146,13 @@
       line-height: 1.5;
     }
 
-    .info a {
-      color: #a855f7;
-      text-decoration: none;
-    }
-
     .status {
       margin-top: 15px;
       padding: 8px;
       border-radius: 10px;
       font-size: 0.7rem;
       background: rgba(0, 0, 0, 0.3);
-      color: rgba(255, 255, 255, 0.5);
+      color: rgba(255, 255, 255, 0.6);
     }
   </style>
 </head>
@@ -183,27 +178,34 @@
     </button>
 
     <div class="info">
-      Uses Payment Request API with Service Worker<br>
       Opens in a native 3-minute secure sheet · No history saved<br>
-      <a href="#" id="howItWorksLink">How it works →</a>
+      Supported in Chrome, Edge, Brave
     </div>
-    <div class="status" id="status">✅ Ready · Click button to open payment sheet</div>
+    <div class="status" id="status">⏳ Loading service worker...</div>
   </div>
 
   <script>
-    // Get the current origin
     const origin = window.location.origin;
-    
-    // Register Service Worker from root
+    let swRegistration = null;
+
+    // Register Service Worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js', { scope: '/' })
         .then(reg => {
+          swRegistration = reg;
           console.log('Service Worker registered:', reg);
           document.getElementById('status').innerHTML = '✅ Service Worker ready · Click to pay';
+          
+          // Wait for controller to be ready
+          if (!navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(() => {
+              console.log('Service Worker controller ready');
+            });
+          }
         })
         .catch(err => {
           console.error('SW registration failed:', err);
-          document.getElementById('status').innerHTML = '⚠️ Service Worker failed: ' + err.message;
+          document.getElementById('status').innerHTML = '❌ Service Worker failed: ' + err.message;
         });
     } else {
       document.getElementById('status').innerHTML = '❌ Service Worker not supported · Use Chrome/Edge';
@@ -235,11 +237,7 @@
       document.getElementById('status').innerHTML = '🔄 Opening payment sheet...';
       
       // Ensure service worker is ready
-      if (navigator.serviceWorker.controller) {
-        console.log('Service worker controller ready');
-      } else {
-        await navigator.serviceWorker.ready;
-      }
+      await navigator.serviceWorker.ready;
 
       try {
         const paymentMethods = [
@@ -257,7 +255,6 @@
         };
         
         const request = new PaymentRequest(paymentMethods, paymentDetails);
-        
         const response = await request.show();
         await response.complete('success');
         document.getElementById('status').innerHTML = '✅ Payment sheet closed successfully';

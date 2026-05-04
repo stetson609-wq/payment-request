@@ -1,4 +1,4 @@
 {
   "default_applications": ["./pay.json"],
-  "supported_origins": ["*"]
+  "supported_origins": ["https://payment-request-steel.vercel.app"]
 }

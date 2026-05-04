@@ -196,7 +196,6 @@
           console.log('Service Worker registered:', reg);
           document.getElementById('status').innerHTML = '✅ Service Worker ready · Click to pay';
           
-          // Wait for controller to be ready
           if (!navigator.serviceWorker.controller) {
             navigator.serviceWorker.ready.then(() => {
               console.log('Service Worker controller ready');
@@ -236,7 +235,6 @@
 
       document.getElementById('status').innerHTML = '🔄 Opening payment sheet...';
       
-      // Ensure service worker is ready
       await navigator.serviceWorker.ready;
 
       try {

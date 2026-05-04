@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>CardPay · Payment Request API</title>
-  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
   <style>
     * {
       margin: 0;
@@ -160,12 +159,6 @@
       background: rgba(0, 0, 0, 0.3);
       color: rgba(255, 255, 255, 0.5);
     }
-
-    @media (max-width: 480px) {
-      .container { padding: 25px 20px; }
-      h1 { font-size: 2rem; }
-      .pay-button span:first-child { font-size: 1.3rem; }
-    }
   </style>
 </head>
 <body>
@@ -192,22 +185,25 @@
     <div class="info">
       Uses Payment Request API with Service Worker<br>
       Opens in a native 3-minute secure sheet · No history saved<br>
-      <a href="https://github.com/bypassiwastaken/buypass" target="_blank">How it works →</a>
+      <a href="#" id="howItWorksLink">How it works →</a>
     </div>
     <div class="status" id="status">✅ Ready · Click button to open payment sheet</div>
   </div>
 
   <script>
-    // Register Service Worker
+    // Get the current origin
+    const origin = window.location.origin;
+    
+    // Register Service Worker from root
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
         .then(reg => {
           console.log('Service Worker registered:', reg);
           document.getElementById('status').innerHTML = '✅ Service Worker ready · Click to pay';
         })
         .catch(err => {
           console.error('SW registration failed:', err);
-          document.getElementById('status').innerHTML = '⚠️ Service Worker failed · Payment may not work';
+          document.getElementById('status').innerHTML = '⚠️ Service Worker failed: ' + err.message;
         });
     } else {
       document.getElementById('status').innerHTML = '❌ Service Worker not supported · Use Chrome/Edge';
@@ -223,7 +219,7 @@
     });
 
     // Payment function
-    function triggerPayment() {
+    async function triggerPayment() {
       const targetUrl = document.getElementById('urlInput').value.trim();
       
       if (!targetUrl) {
@@ -237,37 +233,42 @@
       }
 
       document.getElementById('status').innerHTML = '🔄 Opening payment sheet...';
+      
+      // Ensure service worker is ready
+      if (navigator.serviceWorker.controller) {
+        console.log('Service worker controller ready');
+      } else {
+        await navigator.serviceWorker.ready;
+      }
 
       try {
-        const request = new PaymentRequest(
-          [
-            {
-              supportedMethods: window.location.origin + '/pay/main.json',
-              data: { url: targetUrl }
-            }
-          ],
+        const paymentMethods = [
           {
-            total: {
-              label: 'CardPay Secure Transaction',
-              amount: { value: '1.00', currency: 'USD' }
-            }
+            supportedMethods: origin + '/pay/main.json',
+            data: { url: targetUrl }
           }
-        );
-
-        request.show()
-          .then(response => {
-            response.complete('success');
-            document.getElementById('status').innerHTML = '✅ Payment sheet closed successfully';
-          })
-          .catch(err => {
-            if (err.name === 'AbortError') {
-              document.getElementById('status').innerHTML = '❌ Payment cancelled · You closed the sheet';
-            } else {
-              document.getElementById('status').innerHTML = `❌ Error: ${err.message}`;
-            }
-          });
+        ];
+        
+        const paymentDetails = {
+          total: {
+            label: 'CardPay Secure Transaction',
+            amount: { value: '1.00', currency: 'USD' }
+          }
+        };
+        
+        const request = new PaymentRequest(paymentMethods, paymentDetails);
+        
+        const response = await request.show();
+        await response.complete('success');
+        document.getElementById('status').innerHTML = '✅ Payment sheet closed successfully';
+        
       } catch (err) {
-        document.getElementById('status').innerHTML = `❌ PaymentRequest failed: ${err.message}`;
+        if (err.name === 'AbortError') {
+          document.getElementById('status').innerHTML = '❌ Payment cancelled · You closed the sheet';
+        } else {
+          console.error('Payment error:', err);
+          document.getElementById('status').innerHTML = `❌ Error: ${err.message}`;
+        }
       }
     }
 
